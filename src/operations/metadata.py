@@ -46,11 +46,6 @@ def set_cover(epub_path: str, tmp_path: str, cover_zip_path: str, new_image_byte
     os.replace(tmp_path, epub_path)
 
 
-def resize_cover() -> None:
-
-    return None
-
-
 def download_cover(epub_path: str, opf_path: str, cover_item: ManifestItem):
     cover_zip_path = cover_item.href
 
