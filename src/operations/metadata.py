@@ -1,7 +1,6 @@
 import zipfile
 import os
 import io
-import cv2
 from PIL import Image
 from src.epub_io.opf import OPFData, ManifestItem
 from .cover_resize import cover_resize_stretch, cover_resize_crop
@@ -44,11 +43,6 @@ def set_cover(epub_path: str, tmp_path: str, cover_zip_path: str, new_image_byte
                 dst.writestr(item, src.read(item.filename))
 
     os.replace(tmp_path, epub_path)
-
-
-def resize_cover() -> None:
-
-    return None
 
 
 def download_cover(epub_path: str, opf_path: str, cover_item: ManifestItem):

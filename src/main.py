@@ -2,26 +2,6 @@ import argparse
 import sys
 from .formator import EpubFormator
 
-def command_info(args):
-    fmt = EpubFormator(args.epub)
-    print(f"Title: \t\t {fmt.get_title()}")
-    print(f"Author: \t {fmt.get_author()}")
-    print(f"Language: \t {fmt.get_language()}")
-    print(f"Cover ID: \t {fmt.get_cover()}")
-
-
-def command_set_language(args):
-    fmt = EpubFormator(args.epub)
-    fmt.set_language(args.language)
-    print(f"Language set to {args.language}")
-
-
-def command_set_cover(args):
-    fmt = EpubFormator(args.epub)
-    fmt.set_cover(args.image)
-    print(f"Cover replaced with {args.image}")
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="epub-formater",
