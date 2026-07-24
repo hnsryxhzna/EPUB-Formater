@@ -1,7 +1,6 @@
 import zipfile
 import os
 import io
-import cv2
 from PIL import Image
 from src.epub_io.opf import OPFData, ManifestItem
 from .cover_resize import cover_resize_stretch, cover_resize_crop
