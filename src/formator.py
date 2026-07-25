@@ -11,8 +11,7 @@ class EpubFormator:
         self.opf_path   = get_opf_path(epub_path)
         self.data       = parse_opf(epub_path, self.opf_path)
         self.cover_item = get_cover_item(self.data)
-        if self.cover_item is None:
-            raise ValueError("No cover image found in this EPUB")
+        self.has_cover  = not (self.cover_item is None)
 
 
     def get_title(self):
@@ -45,6 +44,8 @@ class EpubFormator:
 
 
     def set_cover(self, cover: str) -> None:
+        if self.cover_item is None:
+            raise ValueError("No cover image found in this EPUB")
         set_cover_from_path(self.epub_path, cover, self.cover_item)
         save_opf(self.epub_path, self.opf_path, self.data)
         print(f"Cover replaced with '{cover}'")

@@ -2,14 +2,13 @@ import zipfile
 import os
 import io
 from PIL import Image
-from src.epub_io.opf import OPFData, ManifestItem
-from .cover_resize import cover_resize_stretch, cover_resize_crop
+from src.epub_io.opf import OPFData, ManifestItem, set_language_tree
 
 def set_language(data: OPFData, language: str) -> OPFData:
     if not language or not language.strip():
         raise ValueError("Language code cannot be empty")
 
-    data.language = language.strip().lower()
+    set_language_tree(data, language.strip().lower())
     return data
 
 
