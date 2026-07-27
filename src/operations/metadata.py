@@ -4,6 +4,9 @@ import io
 from PIL import Image
 from src.epub_io.opf import OPFData, ManifestItem, set_language_tree
 
+_FMT = {"image/jpeg":"JPEG","image/jpg":"JPEG","image/png":"PNG",
+        "image/gif":"GIF","image/webp":"WEBP"}
+
 def set_language(data: OPFData, language: str) -> OPFData:
     if not language or not language.strip():
         raise ValueError("Language code cannot be empty")
@@ -23,14 +26,13 @@ def set_cover_from_path(epub_path: str, new_image_path: str, cover_item: Manifes
 
 
 def set_cover_from_image(epub_path: str, img: Image.Image, cover_item: ManifestItem) -> None:
-    cover_zip_path = cover_item.href
-    tmp_path = epub_path + ".tmp"
-
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=100)
-    new_image_bytes = buf.getvalue()
-
-    set_cover(epub_path, tmp_path, cover_zip_path, new_image_bytes)
+    format = _FMT.get(cover_item.media_type.lower()) or _FMT.get("image/" + os.path.splitext(cover_item.href)[1].lstrip(".").lower()) or "JPEG"
+    buffer, kwargs = io.BytesIO(), {}
+    if format == "JPEG":
+        img = img.convert("RGB")
+        kwargs["quality"] = 100
+    img.save(buffer, format=format, **kwargs)
+    set_cover(epub_path, epub_path + ".tmp", cover_item.href, buffer.getvalue())
 
 
 def set_cover(epub_path: str, tmp_path: str, cover_zip_path: str, new_image_bytes) -> None:
