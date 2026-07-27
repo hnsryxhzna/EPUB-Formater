@@ -40,6 +40,7 @@ class OPFData:
 
     manifest: list[ManifestItem] = field(default_factory=list)
     spine:    list[SpineItem]    = field(default_factory=list)
+    tree: ET.ElementTree | None  = field(default=None, repr=False, compare=False)
 
 
 def parse_opf(epub_path: str, opf_path: str) -> OPFData:
@@ -49,6 +50,7 @@ def parse_opf(epub_path: str, opf_path: str) -> OPFData:
 
     root = tree.getroot()
     data = OPFData()
+    data.tree = tree
 
     _parse_metadata(root, data)
     _parse_manifest(root, data)
@@ -58,6 +60,15 @@ def parse_opf(epub_path: str, opf_path: str) -> OPFData:
 
 
 def save_opf(epub_path: str, opf_path: str, data: OPFData) -> None:
+    if data.tree is None:
+        raise ValueError("Cannot save")
+
+    ET.register_namespace("", OPF_NS)
+    ET.register_namespace("dc", DC_NS)
+    opf_bytes = ET.tostring(
+        data.tree.getroot(), encoding="utf-8", xml_declaration=True
+    )
+
     tmp_path = epub_path + ".tmp"
 
     with zipfile.ZipFile(epub_path, "r") as src, \
@@ -65,7 +76,7 @@ def save_opf(epub_path: str, opf_path: str, data: OPFData) -> None:
 
         for item in src.infolist():
             if item.filename == opf_path:
-                dst.writestr(item, _serialize_opf(data))
+                dst.writestr(item, opf_bytes)
             else:
                 dst.writestr(item, src.read(item.filename))
 
@@ -132,45 +143,21 @@ def _parse_spine(root: ET.Element, data: OPFData) -> None:
         ))
 
 
-def _serialize_opf(data: OPFData) -> str:
-    ET.register_namespace("",    OPF_NS)
-    ET.register_namespace("dc",  DC_NS)
+def set_language_tree(data: OPFData, language: str) -> None:
+    if data.tree is None:
+        raise ValueError("No parsed OPF tree to edit")
 
-    root = ET.Element(f"{{{OPF_NS}}}package")
-    meta = ET.SubElement(root, f"{{{OPF_NS}}}metadata")
+    root = data.tree.getroot()
+    meta = root.find("opf:metadata", NS)
+    if meta is None:
+        raise ValueError("No metadata element in OPF")
 
-    def add_dc(tag: str, text: str):
-        el = ET.SubElement(meta, f"{{{DC_NS}}}{tag}")
-        el.text = text
+    lang = meta.find("dc:language", NS)
+    if lang is None:
+        lang = ET.SubElement(meta, f"{{{DC_NS}}}language")
+    lang.text = language
 
-    add_dc("title", data.title)
-    add_dc("creator", data.author)
-    add_dc("language", data.language)
-    add_dc("publisher", data.publisher)
-    add_dc("identifier", data.identifier)
-
-    if data.cover_meta_id:
-        cover_meta = ET.SubElement(meta, f"{{{OPF_NS}}}meta")
-        cover_meta.set("name", "cover")
-        cover_meta.set("content", data.cover_meta_id)
-
-    manifest_el = ET.SubElement(root, f"{{{OPF_NS}}}manifest")
-    for item in data.manifest:
-        el = ET.SubElement(manifest_el, f"{{{OPF_NS}}}item")
-        el.set("id", item.id)
-        el.set("href", item.href)
-        el.set("media-type", item.media_type)
-        if item.properties:
-            el.set("properties", item.properties)
-
-    spine_el = ET.SubElement(root, f"{{{OPF_NS}}}spine")
-    for sitem in data.spine:
-        el = ET.SubElement(spine_el, f"{{{OPF_NS}}}itemref")
-        el.set("idref", sitem.idref)
-        if not sitem.linear:
-            el.set("linear", "no")
-
-    return ET.tostring(root, encoding="unicode", xml_declaration=True)
+    data.language = language
 
 
 if __name__ == "__main__":

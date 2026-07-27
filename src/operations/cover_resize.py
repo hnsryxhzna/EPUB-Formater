@@ -53,7 +53,11 @@ def resize_cover(epub_path, opf_path, cover_item, method, ratio) -> Image.Image:
     if method == "stretch":
         new_cover = cover_resize_stretch(img, ratio)
     else:
-        new_cover = cover_resize_crop(img, ratio)
+        cover = cover_resize_crop(img, ratio)
+        if cover is not None:
+            new_cover = cover_resize_crop(img, ratio)
+        else:
+            raise ValueError("Error in cover resizing")
 
     return new_cover
 
